@@ -13,6 +13,10 @@ st.set_page_config(
     page_icon="📃",
 )
 
+llm = ChatopenAI(
+    temperate=0.1
+)
+
 @st.cache_data(show_spinner="Embedding file...")
 def embed_file(file):
     file_content = file.read()
@@ -52,6 +56,19 @@ def paint_history():
     for message in st.session_state["message"]:
         send_message(message["message"], message["role"], save=False)
 
+def format_docs(docs):
+    return "\n\n".join(document.page_content for document in docs)
+
+prompt = ChatPromptTemplate.from_messages([
+    ("system", 
+     """
+     Answer the question using ONLY the following ontext. If you don't know the answer just say you don't know. DON'T make anything up.
+
+     Context: {context}
+     """)
+    ("human", "{question}")
+])
+
 st.title("DocumentDetective")
 
 st.markdown("""
@@ -70,6 +87,13 @@ if file:
     message = st.chat_input("Ask anything about your file...")
     if message:
         send_message(message, "human")
+        chain = {
+            "context": retriever | RunnableLambda(format_docs),
+            "question": RunnablePassthrough()
+        } | prompt | llm
+        response = chain.invoke(message)
+        send_message(response.content, "ai")
+
 else:
     st.session_state["message"]=[]
         
