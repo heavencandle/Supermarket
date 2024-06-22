@@ -81,10 +81,3 @@ To run DetectiveMangle locally, follow these steps:
 
 *Image of Mangle in a Sherlock Holmes costume by [Yurang](https://www.instagram.com/yurang_official/?hl=kom).*
 
-## Contributing
-
-Contributions are welcome! Please open an issue or submit a pull request for any improvements or new features.
-
-## License
-
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.

@@ -1,20 +1,40 @@
 from langchain.chat_models import ChatOpenAI
-from langchain.document_loaders import TextLoader
+from langchain.document_loaders import UnstructuredFileLoader
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.embeddings import OpenAIEmbeddings, CacheBackedEmbeddings
 from langchain.vectorstores import FAISS
 from langchain.storage import LocalFileStore
 from langchain.prompts import ChatPromptTemplate
 from langchain.schema.runnable import RunnablePassthrough, RunnableLambda
+from langchain.callbacks.base import BaseCallbackHandler
 import streamlit as st
 
 st.set_page_config(
     page_title="DocumentDetective",
     page_icon="📃",
 )
+class ChatCallbackHandler(BaseCallbackHandler):
+
+    message = ""
+    
+    def on_llm_start(self, *args, **kwargs):
+        self.message_box = st.empty()
+
+    def on_llm_end(self, *args, **kwargs):
+        save_message(self.message, "ai")
+
+    def on_llm_new_token(self, token, *args, **kwargs):
+        self.message += token
+        self.message_box.markdown(self.message)
+
 
 llm = ChatOpenAI(
-    temperature=0.1
+    temperature=0.1,
+    streaming=True,
+    callbacks=[
+        ChatCallbackHandler()
+    ]
+
 )
 
 @st.cache_data(show_spinner="Embedding file...")
@@ -23,16 +43,14 @@ def embed_file(file):
     file_path = f"./.cache/files/{file.name}"
     with open(file_path, "wb") as f:
         f.write(file_content)
-
     cache_dir = LocalFileStore(f"./.cache/embeddings/{file.name}")
-
     splitter = CharacterTextSplitter.from_tiktoken_encoder(
         separator="\n",
         chunk_size=4000, 
         chunk_overlap=True,
     )
 
-    loader = TextLoader(file_path, encoding="utf-8")
+    loader = UnstructuredFileLoader(file_path)
     docs = loader.load_and_split(text_splitter=splitter)
 
     embeddings = OpenAIEmbeddings()
@@ -41,10 +59,12 @@ def embed_file(file):
     )
 
     vectorstore = FAISS.from_documents(docs, cached_embeddings)
-
     retriever = vectorstore.as_retriever()
 
     return retriever
+
+def save_message(message, role):
+    st.session_state["message"].append({"message": message, "role": role})
 
 def send_message(message, role, save=True):
     if role=="ai":
@@ -54,7 +74,7 @@ def send_message(message, role, save=True):
         with st.chat_message(role, avatar="./image/hamter.png"):
             st.markdown(message)
     if save:
-        st.session_state["message"].append({"message": message, "role": role})
+        save_message(message, role)
 
 def paint_history():
     for message in st.session_state["message"]: 
@@ -123,8 +143,8 @@ if file:
             | prompt 
             | llm
         )
-        response = chain.invoke(message)
-        send_message(response.content, "ai")
+        with st.chat_message("ai", avatar="./image/detective.png"):
+            response = chain.invoke(message)
 
 else:
     st.session_state["message"]=[]
