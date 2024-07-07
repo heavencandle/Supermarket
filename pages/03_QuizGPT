@@ -1,0 +1,21 @@
+from langchain.document_loaders import UnstructuredFileLoader
+from langchain.text_splitter import CharacterTextSplitter
+import streamlit as st
+from langchain.retrievers import WikipediaRetriever
+
+
+st.set_page_config(
+    page_title="QuizGPT",
+    page_icon="❓",
+)
+
+with st.container:
+    choice = st.selectbox("Choose what you want to use.",
+                            (
+                                "File", "Wikipedia Article"
+                            )
+                        )
+    if choice=="File":
+        pass
+        
+    
