@@ -3,6 +3,7 @@ from langchain.document_loaders import UnstructuredFileLoader
 from langchain.text_splitter import CharacterTextSplitter
 import streamlit as st
 from langchain.retrievers import WikipediaRetriever
+from langchain.chat_models import ChatOpenAI
 
 
 st.set_page_config(
@@ -28,8 +29,13 @@ def split_file(file):
 
     return docs
 
+llm = ChatOpenAI(
+    temperature=0.1,
+    model="gpt-3.5-turbo-1106"
+)
 
 with st.container:
+    docs = None
     choice = st.selectbox("Choose what you want to use.",
                             (
                                 "File", "Wikipedia Article"
@@ -40,10 +46,21 @@ with st.container:
             "Upload a .docx, .txt, or .pdf file",
             type=["pdf", "txt", "docx"]
         )
+        if file:
+            split_file(file)
     else:
         topic = st.text_input("Search Wikipedia...")
         if topic:
             retriever = WikipediaRetriever(top_k_results=5)
             with st.status("Searching Wikipedia..."):
                 retriever.get_relevant_documents(topic)
+
+with st.container:
+    if not docs:
+        st.markdown(f"""
+    Welcome to QuizGPT
+    """)
+        
+    else:
+        st.write("")
     
