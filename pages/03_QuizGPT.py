@@ -2,7 +2,6 @@ from langchain.retrievers import WikipediaRetriever
 from langchain.document_loaders import UnstructuredFileLoader
 from langchain.text_splitter import CharacterTextSplitter
 import streamlit as st
-from langchain.retrievers import WikipediaRetriever
 from langchain.chat_models import ChatOpenAI
 
 
@@ -34,11 +33,11 @@ llm = ChatOpenAI(
     model="gpt-3.5-turbo-1106"
 )
 
-with st.container:
+with st.container():
     docs = None
     choice = st.selectbox("Choose what you want to use.",
                             (
-                                "File", "Wikipedia Article"
+                                "Wikipedia Article", "File"
                             )
                         )
     if choice=="File":
@@ -53,14 +52,14 @@ with st.container:
         if topic:
             retriever = WikipediaRetriever(top_k_results=5)
             with st.status("Searching Wikipedia..."):
-                retriever.get_relevant_documents(topic)
+                docs = retriever.get_relevant_documents(topic)
 
-with st.container:
+with st.container():
     if not docs:
         st.markdown(f"""
     Welcome to QuizGPT
     """)
         
     else:
-        st.write("")
+        st.write(docs)
     
