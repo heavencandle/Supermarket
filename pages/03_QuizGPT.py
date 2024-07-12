@@ -11,7 +11,7 @@ from langchain.schema import BaseOutputParser
 class JsonOutputParser(BaseOutputParser):
 
     def parse(self, text):
-        text = text.replace('json').replace('"""', "")
+        text = text.replace('json').replace('```', "")
         return json.loads(text)
     
 output_parsesr = JsonOutputParser()
