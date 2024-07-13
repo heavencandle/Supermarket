@@ -11,10 +11,10 @@ from langchain.schema import BaseOutputParser
 class JsonOutputParser(BaseOutputParser):
 
     def parse(self, text):
-        text = text.replace('json').replace('```', "")
+        text = text.replace('json', "").replace('```', "")
         return json.loads(text)
     
-output_parsesr = JsonOutputParser()
+output_parser = JsonOutputParser()
 
 st.set_page_config(
     page_title="QuizGPT",
@@ -40,7 +40,7 @@ def split_file(file):
 
 @st.cache_data(show_spinner="Making quiz...")
 def run_quiz_chain(_docs, topic):
-    chain = {"context": questions_chain} | formatting_chain | output_parse
+    chain = {"context": questions_chain} | formatting_chain | output_parser
     return chain.invoke(_docs)
 
 @st.cache_data(show_spinner="Searching Wikipedia...")
@@ -251,11 +251,22 @@ with st.container():
     """)
         
     else:
+        response = run_quiz_chain(docs, topic if topic else file.name)
+        with st.form("questions_form"):
+            for question in reponse["questions"]:
+                st.write(question["question"])
+                value = st.radio(
+                    "Select an option",
+                    [answer["answer"] for answer in question["answers"]],
+                    index=None,
+                )
+                if {"answer": value, "correct": True} in question["answers"]:
+                    st.success("Correct!")
+                elif value is not None:
+                    st.error("Wrong!")
+            button = st.button("Submit")
+                
 
-        start = st.button("Generate Quiz")
-
-        if start:
-            response = run_quiz_chain(docs, topic if topic else file.name)
 
             
 
