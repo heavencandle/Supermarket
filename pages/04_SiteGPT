@@ -1,1 +1,8 @@
+import streamlit as st
+import playwright
+from langchain.document_loaders import AsyncChromiumLoader
 
+with st.container():
+    url = st.text_input("Wirte down a URL", placeholder="https://example.com")
+
+if url: 
