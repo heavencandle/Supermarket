@@ -1,8 +1,19 @@
 import streamlit as st
-import playwright
 from langchain.document_loaders import AsyncChromiumLoader
+from langchain.document_transformers import Html2TextTransformer
+
+st.set_page_config(
+    page_title="SiteGPT",
+    page_icon=""
+)
+
+html2text_transformer = Html2TextTransformer()
 
 with st.container():
     url = st.text_input("Wirte down a URL", placeholder="https://example.com")
 
 if url: 
+    loader = AsyncChromiumLoader([url])
+    docs = loader.load()
+    transformed = html2text_transformer.transform_documents(docs)
+    
