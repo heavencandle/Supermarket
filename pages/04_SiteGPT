@@ -2,6 +2,8 @@ from langchain.document_loaders import SitemapLoader, text
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 import streamlit as st
 
+
+
 def parse_page(soup):
     header = soup.find("header")
     footer = soup.find("footer")
@@ -32,3 +34,18 @@ def load_website(url):
     loader.requests_per_second = 2
     docs = loader.load_and_split(text_splitter=splitter)
     return docs
+
+
+with st.container:
+    url = st.text_input(
+        "Write down a URL",
+        placeholder="https://example.com",
+    )
+
+
+if url:
+    if ".xml" not in url:
+        with st.sidebar:
+            st.error("Please write down a Sitemap URL.")
+    else:
+        retriever = load_website(url)
