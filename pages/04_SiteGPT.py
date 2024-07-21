@@ -67,8 +67,7 @@ def get_answers(inputs):
                     "question": question,
                     "context": doc.page_content
                     }).content,
-                "source": doc.metadata["source"],
-                "date": doc.metadata["lastmod"]
+                "source": doc.metadata["source"]
             } for doc in docs
         ]
     }
@@ -79,7 +78,7 @@ def choose_answer(inputs):
     choose_chain = choose_prompt | llm
 
     condensed = "\n\n".join(
-        f"{answer['answer']}\nSource: {answer['source']}\nDate: {answer['date']}\n" 
+        f"{answer['answer']}\nSource: {answer['source']}\n" 
         for answer in answers
         )
     
@@ -94,10 +93,7 @@ def parse_page(soup):
     if footer:
         footer.decompose()
     return (
-        str(soup.get_text())
-        .replace("\n", " ")
-        .replace("\xa0", " ")
-        .replace("CloseSearch Submit Blog", "")
+        str(soup.get_text()).replace("\n", " ").replace("\xa0", " ").replace("CloseSearch Submit Blog", "")
     )
 
 @st.cache_data(show_spinner="Loading website...")
@@ -106,25 +102,23 @@ def load_website(url):
         chunk_size=1000,
         chunk_overlap=200,
     )
+
     loader = SitemapLoader(
         url,
-        filter_urls=[
-            r"^(.*\/blog\/).*",
-        ],
         parsing_function=parse_page,
     )
     loader.requests_per_second = 2
     docs = loader.load_and_split(text_splitter=splitter)
-    vector_store = FAISS.from_documents(docs, OpenAIEmbeddings)
-    return vector_store.as_retreiever()
+    vector_store = FAISS.from_documents(docs, OpenAIEmbeddings())
+    
+    return vector_store.as_retriever() 
 
 st.set_page_config(
     page_title="SiteGPT",
     page_icon="🖥️",
 )
 
-
-with st.container:
+with st.container():
     st.markdown(
         """
         # SiteGPT
