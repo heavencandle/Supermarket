@@ -253,7 +253,7 @@ with st.container():
     else:
         response = run_quiz_chain(docs, topic if topic else file.name)
         with st.form("questions_form"):
-            for question in reponse["questions"]:
+            for question in response["questions"]:
                 st.write(question["question"])
                 value = st.radio(
                     "Select an option",
