@@ -145,7 +145,7 @@ with st.container():
                 {context}
                 ------------
                 Given the new context, refine the existing summary.
-                If the context isn't useful  
+                If the context isn't useful or the existing summary does not need to be refined, 
                 RETURN the existing summary.
                 
                 REFINED SUMMARY:
