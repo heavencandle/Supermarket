@@ -8,13 +8,13 @@ from langchain.prompts import ChatPromptTemplate
 from langchain.schema.runnable import RunnablePassthrough, RunnableLambda
 from langchain.callbacks.base import BaseCallbackHandler
 import streamlit as st
+from streamlit_pills import pills
 
 st.set_page_config(
     page_title="DocumentDetective",
-    page_icon="📃",
+    page_icon="🐻",
 )
 class ChatCallbackHandler(BaseCallbackHandler):
-
     message = ""
     
     def on_llm_start(self, *args, **kwargs):
@@ -67,7 +67,7 @@ def save_message(message, role):
     st.session_state["message"].append({"message": message, "role": role})
 
 def send_message(message, role, save=True):
-    if role=="ai":
+    if role=="assistant":
         with st.chat_message(role, avatar="./image/detective.png"):
             st.markdown(message)
     else:
@@ -102,39 +102,46 @@ prompt = ChatPromptTemplate.from_messages(
     ]
 )
 
-st.title("DetectiveMangle🕵️‍♂️🐻")
+st.session_state["message"]=[]
+p_selected = None
+file = None
 
-st.markdown("""
-## Welcome to Mangle the Detective! 
+# st.markdown("<style> .stChatMessage  { border: 1px solid #F0F2F6; }</style>", unsafe_allow_html=True)
+with st.chat_message("assistant", avatar="./image/detective.png"):
+    st.write("Hi, do you need my help?")
+    p_selected = pills(label='', label_visibility='collapsed', options=['What can you do?', 'How to use'], index=None, clearable=False)
 
-Meet Mangle, our adorable bear detective who is always ready to solve your document mysteries. Dressed in a classic Sherlock Holmes costume, Mangle brings a blend of cuteness and sharp detective skills to help you uncover the information you need from your files.
-
-*Image of Mangle by [Yurang](https://www.instagram.com/yurang_official/?hl=kom).*
-
-### What Can Mangle Do?
-- **Answer Questions:** Ask Mangle anything about your uploaded documents, and get clear, concise answers.
-- **Summarize Content:** Get quick summaries of sections or entire documents.
-- **Find Key Information:** Let Mangle help you locate important details hidden in your files.
-
-### How to Use
-1. **Upload Your Document:** Use the uploader below to add a .txt, .pdf, or .docx file.
-2. **Ask Mangle:** Type your question in the chat, and Mangle will fetch the answer for you.
-3. **Enjoy the Insights:** Whether it's summarizing a section or finding specific information, Mangle is here to help!
-            
-
-""")
-
-with st.chat_message("ai", avatar="./image/detective.png"):
-    st.write("Upload your document here:")
-    file = st.file_uploader("Upload a .txt, .pdf, or .docx file!", type=["pdf", "txt", "docx"])
+if p_selected:
+    with st.chat_message("assistant", avatar="./image/detective.png"):
+        if p_selected == 'What can you do?':
+            st.write(f"""
+        - **Answer Questions:** Ask Mangle anything about your uploaded documents, and get clear, concise answers.
+        - **Summarize Content:** Get quick summaries of sections or entire documents.
+        - **Find Key Information:** Let Mangle help you locate important details hidden in your files.
+                            """)
+        elif p_selected == 'How to use':
+            st.write(f"""
+        1. **Upload Your Document:** Use the uploader below to add a .txt, .pdf, or .docx file.
+        2. **Ask Mangle:** Type your question in the chat, and Mangle will fetch the answer for you.
+        3. **Enjoy the Insights:** Whether it's summarizing a section or finding specific information, Mangle is here to help!
+            """)
+            file=st.file_uploader('', type=["pdf", "txt", "docx"])
+        else:
+            pass
 
 if file:
     retriever = embed_file(file)
-    send_message("I've got my magnifying glass ready! Ask away and let's uncover the answers together!", "ai", save=False)
-    paint_history()
-    message = st.chat_input("Ask anything about your file...")
-    if message:
-        send_message(message, "human")
+    send_message(f"I've got my magnifying glass ready! Ask away and let's uncover the answers together!", "assistant", save=False)
+else:
+    st.session_state["message"]=[]
+
+paint_history()
+message = st.chat_input("Ask anything about your file...")
+
+if message:
+    send_message(message, "human")
+
+    try:
         chain = (
             {
                 "context": retriever | RunnableLambda(format_docs),
@@ -143,10 +150,18 @@ if file:
             | prompt 
             | llm
         )
-        with st.chat_message("ai", avatar="./image/detective.png"):
-            response = chain.invoke(message)
+    except NameError:
+        chain = (
+            {   
+                "context": {},
+                "question": RunnablePassthrough()
+            } 
+            | prompt 
+            | llm
+        )
+    with st.chat_message("assistant", avatar="./image/detective.png"):
+        response = chain.invoke(message)
 
-else:
-    st.session_state["message"]=[]
+# *Image of Mangle by [Yurang](https://www.instagram.com/yurang_official/?hl=kom).*
         
 
